@@ -1,11 +1,13 @@
 ---
 title: "Assignment 1"
-subtitle: "California Spiny Lobster (*Panulirus Interruptus*): Assessing the Impact of Marine Protected Areas (MPAs) at 5 Reef Sites in Santa Barbara County" 
-author: "EDS 241 / ESM 244 (**Due: 1/17**)"
+author: 'EDS 241 / ESM 244 (**Due: 1/20**)'
 date: "1/8/26"
-output: 
-    html_document:
-      theme: flatly
+output:
+    pdf_document: default
+html_document:
+    theme: flatly
+subtitle: 'California Spiny Lobster (*Panulirus Interruptus*): Assessing the Impact
+  of Marine Protected Areas (MPAs) at 5 Reef Sites in Santa Barbara County'
 ---
 
 ```{r setup, include=FALSE}
@@ -180,46 +182,44 @@ Create a plot of lobster **size** :
 4)  You choose the grouping variable(s)!
 
 ```{r}
-# Plot 1: Ridge plot - Lobster counts grouped by reef location
-spiny_counts %>%
-    ggplot(aes(x = counts, y = site, fill = site)) +
-    geom_density_ridges(alpha = 0.6, quantile_lines = TRUE, quantiles = 2) +
-    labs(title = "Lobster counts by reef location",
-         subtitle = "Vertical line shows median",
-         x = "Lobster counts",
-         y = "Reefs label") +
-    theme_minimal() +
-    theme(legend.position = "none")
+# Plot 1: Ridge plot - Lobster counts grouped by reef sites
+# Recode site names
+spiny_counts <- spiny_counts %>%
+  mutate(site_label = case_when(
+    site == "AQUE" ~ "Arroyo Quemado",
+    site == "CARP" ~ "Carpinteria",
+    site == "MOHK" ~ "Mohawk",
+    site == "IVEE" ~ "Isla Vista",
+    site == "NAPL" ~ "Naples",
+    TRUE ~ site))
 
-```
-
-```{r}
-spiny_counts %>%
-    ggplot(aes(x = counts, y = site, fill = site)) +
-    geom_density_ridges(alpha = 0.6, 
+# Ridge plot with legend
+spiny_counts %>% ggplot(aes(x = counts, y = site_label, fill = site_label)) +
+    geom_density_ridges(alpha = 0.6,
                         quantile_lines = TRUE, 
                         quantiles = 2,
                         quantile_fun = median,
                         vline_color = "red",
-                        vline_width = 0.5,
+                        vline_size = 0.5,
                         scale = 0.8) +
-    labs(title = "Lobster counts by reef location",
+    labs(title = "Lobster counts by reef sites",
+         subtitle = "Red vertical line is median",
          x = "Lobster counts",
-         y = "Reefs label",
-         color = "Vertical line shows median") +
+         y = "Reef sites",
+         fill = "Reef sites",
+         color = "Median") +
     theme_minimal() +
-    theme(legend.position = "right") +
-    guides(fill = "none",
+    theme(legend.position = "right",
+          axis.title.y = element_text(margin = margin(r = 10))) +
+    guides(fill = guide_legend(title = "Reef site"),
            color = guide_legend(override.aes = list(linetype = 1, 
-                                                     linewidth = 1,
-                                                     color = "red"))) +
-    geom_vline(aes(xintercept = NA, color = "Median"), linewidth = 1)
-```
+                                                   linewidth = 1,
+                                                   color = "red")))
 
+```
 
 ```{r}
 # Plot 2: Violin Plot - Lobster counts grouped by MPA status
-
 spiny_counts %>%
     ggplot(aes(x = mpa, y = counts, fill = mpa)) +
     geom_violin(alpha = 0.7) +
@@ -237,7 +237,6 @@ spiny_counts %>%
 
 ```{r}
 # Plot 3: Jitter plot - Lobster counts grouped by year
-
 spiny_counts %>%
     ggplot(aes(x = factor(year), y = counts)) +
     geom_jitter(aes(color = "Individual observations"), 
@@ -246,17 +245,17 @@ spiny_counts %>%
                  aes(color = "Mean"),
                  size = 3, shape = 18) +
     labs(title = "Lobster counts by year (2012-2018)",
-         x = "Year",
+         x = "Years",
          y = "Lobster counts",
          color = "") +
-    scale_color_manual(values = c("Individual observations" = "steelblue", 
-                                   "Mean" = "red")) +
+    scale_color_manual(values = c("Individual observations" = "maroon3", 
+                                   "Mean" = "black")) +
     theme_minimal() +
     theme(legend.position = "bottom")
 ```
 
 ```{r}
-# Density plot: Lobster size grouped by treatment
+# Plot 4: Density plot - Lobster size grouped by treatment
 spiny_counts %>%
     filter(!is.na(mean_size)) %>%
     ggplot(aes(x = mean_size, color = factor(treat), fill = factor(treat))) +
@@ -266,9 +265,9 @@ spiny_counts %>%
          y = "Density",
          color = "Treatment",
          fill = "Treatment") +
-    scale_color_manual(values = c("0" = "#CD853F", "1" = "#2E8B57"),
+    scale_color_manual(values = c("0" = "coral3", "1" = "olivedrab3"),
                        labels = c("0" = "non-MPA", "1" = "MPA")) +
-    scale_fill_manual(values = c("0" = "#CD853F", "1" = "#2E8B57"),
+    scale_fill_manual(values = c("0" = "coral3", "1" = "olivedrab3"),
                       labels = c("0" = "non-MPA", "1" = "MPA")) +
     theme_minimal() +
     theme(legend.position = "bottom")
@@ -288,7 +287,7 @@ means_trt_group <- spiny_counts %>%
                                       mean_size = "Mean size of lobster")) %>%
     add_p() %>% 
     modify_header(label ~ "**Characteristics**") %>% 
-    modify_spanning_header(c("stat_1", "stat_2") ~ "**Reef location**")
+    modify_spanning_header(c("stat_1", "stat_2") ~ "**Reef sites**")
 
 means_trt_group
 
@@ -330,12 +329,11 @@ check_model(m1_ols, check = "normality")
 
 **Explanation:** The density distribution plot shows that the residuals do not follow a normal distribution. Instead of forming a symmetric, bell-shaped curve, the distribution is skewed to the right. Residuals should be centered around zero and spread evenly. The long tail and uneven shape suggest skewness and possible outliers, indicating that the normality assumption is not met.
 
-
 ```{r}
 check_model(m1_ols, check = "homogeneity")
 ```
 
-**Expanation:** This plot shows that the homogeneity of variance assumption of OLS regression is violated. Instead of forming a straight, horizontal line, the residuals display a curved, non-linear pattern. This means the spread of the residuals changes across fitted values, indicating the presence of heteroscedasticity rather than constant variance.
+**Explanation:** This plot shows that the homogeneity of variance assumption of OLS regression is violated. Instead of forming a straight, horizontal line, the residuals display a curved, non-linear pattern. This means the spread of the residuals changes across fitted values, indicating the presence of heteroscedasticity rather than constant variance.
 
 ```{r}
 check_model(m1_ols, check = "pp_check")
@@ -351,7 +349,9 @@ check_model(m1_ols, check = "pp_check")
 
 **b.** Interpret the predictor coefficient in your own words. Use full sentences and write your interpretation of the results to be as clear as possible to a non-academic audience.
 
-**c.** Explain the statistical concept of dispersion and overdispersion in the context of this model.
+**c.** Explain the statistical concept of dispersion and overdispersion in the context of this model. write the assumptions, general description
+
+**Answer:** Dispersion is the measure of how spread out the data points are. In a poisson model, the variance must equal the mean. Overdispersion occurs when the actual variability in lobster counts exceeds what the poisson model predicts (Variance \> Mean). This can lead to misleading results and suggests that a more flexible model is needed to capture the true behavior.
 
 **d.** Compare results with previous model, explain change in the significance of the treatment effect
 
@@ -371,7 +371,7 @@ summ(m2_pois, model.fit = FALSE)
 
 **e.** Check the model assumptions. Explain results.
 
-**Explanation:** The model predicts that non-MPA reefs have an average of about 23 spiny lobsters, while reefs inside MPAs are estimated to have about 24% more lobsters. This suggests that protection may be associated with higher lobster numbers. Because lobster counts are whole numbers, a Poisson model is more appropriate than a standard linear model. The Poisson model is designed for count data and assumes that the average number of lobsters and the variation in those counts are similar. This property is called dispersion, and when the variance is roughly equal to the mean, the model gives reliable results. If the counts vary more than expected, this is called overdispersion, and the Poisson model may underestimate uncertainty, making confidence intervals too narrow and statistical tests too optimistic. Since our model fits the Poisson assumptions reasonably well, we can conclude that MPAs are likely associated with higher lobster numbers, and the estimated 24% increase is meaningful.
+**Explanation:** The poisson model uses a log link, so the coefficients must be exponentiated to interpret them as counts. The intercept implies an expected lobster count of about 23 lobsters in non-treated sites. The treatment effect indicates that MPAs have about 23% more lobsters than non-MPA sites. This effect is statistically significant. This suggests that protection may be associated with higher lobster numbers. Because lobster counts are whole numbers, a poisson model is more appropriate than a standard linear model. The poisson model is designed for count data and assumes that the average number of lobsters and the variation in those counts are similar. This property is called dispersion, and when the variance is roughly equal to the mean, the model gives reliable results. If the counts vary more than expected, this is called overdispersion, and the poisson model may underestimate uncertainty, making confidence intervals too narrow and statistical tests too optimistic. Since our model fits the Poisson assumptions reasonably well, we can conclude that MPAs are likely associated with higher lobster numbers, and the estimated 23% increase is meaningful.
 
 **f.** Conduct tests for over-dispersion & zero-inflation. Explain results.
 
@@ -393,7 +393,7 @@ The influential observations plot shows that a few extreme data points are havin
 check_overdispersion(m2_pois)
 ```
 
-**Explanation:** The dispersion ratio of 67.033 indicates that the variation in data is 67 times higher than what the model expects. The ratio should be close to 1 for a perfect poisson model. The p value (< 0.001) confirms that this overdispersion is statistically significant and not just a result of random chance.
+**Explanation:** The dispersion ratio of 67.033 indicates that the variation in data is 67 times higher than what the model expects. The ratio should be close to 1 for a perfect poisson model. The p value (\< 0.001) confirms that this overdispersion is statistically significant and not just a result of random chance.
 
 The pearson's chi-squared measures the total difference between the observed data and the model prediction. The extremely high value of 16758.289 shows that the model is failing to capture the true structure of the data. When combined with the high dispersion ratio, it proves that the poisson distribution is the wrong choice for this data set.
 
@@ -407,7 +407,7 @@ check_zeroinflation(m2_pois)
 
 **h.** In 1-2 sentences explain rationale for fitting this GLM model.
 
-**Explanation:**
+**Explanation:** We fitted the GLM model (negative binomial model) because it includes dispersion parameter that allows the variance to be different from the mean. This adds flexibility, and lets the model account for the overdispersion found in lobster data, which a poisson model is unable to do.
 
 **i.** Interpret the treatment estimate result in your own words. Compare with results from the previous model.
 
@@ -423,22 +423,20 @@ m3_nb <- glm.nb(counts ~ treat, data = spiny_counts)
 summ(m3_nb, model.fit = "none")
 ```
 
-```{r}
-exp(3.12)
-(exp(0.21) - 1)*100
-```
+**Explanation:** Both models predict an average of 23 lobsters in non-MPA reefs and a similar increase in abundance (23–24%) for MPA reefs. However, their conclusions differ significantly when we consider p value. The poisson model shows a significant effect (p < 0.01), while the negative binomial model shows the effect is actually non-significant (p = 0.22). The negative binomial model account for the extra variability in the data, and indicates that the significance in the poisson model was likely an error caused by overdispersion.
 
 ```{r}
 check_overdispersion(m3_nb)
 ```
 
-**Explanation:** The dispersion ratio for the poisson regression model was very high (67.033), indicating substantial overdispersion and a poor fit to the data. The negative binomial model has a dispersion ratio of 1.398, suggesting that the observed variance is only slightly higher than what the model expects. Since this ratio is close to 1, it indicates that the negative binomial model adequately accounts for the overdispersion present in the data. 
+**Explanation:** The dispersion ratio for the poisson regression model was very high (67.033), indicating substantial overdispersion and a poor fit to the data. The negative binomial model has a dispersion ratio of 1.398, suggesting that the observed variance is only slightly higher than what the model expects. Since this ratio is close to 1, it indicates that the negative binomial model adequately accounts for the overdispersion present in the data.
 
 The p-value of 0.088 indicates that there is insufficient statistical evidence to reject the null hypothesis at the 5% significance level. Therefore, overdispersion is not statistically significant in the negative binomial model, supporting its appropriateness over the poisson model for this analysis.
 
 ```{r}
 check_zeroinflation(m3_nb)
 ```
+
 **Explanation:** The zero-inflation check indicates that the observed data contain 27 zero counts, and the negative binomial model predicts 30 zeros, resulting in a ratio of 1.12. This ratio is close to 1, suggesting that the model captures the frequency of zero observations and that there is no substantial zero-inflation remaining.
 
 In contrast, the poisson regression model under-predicted the number of zero counts relative to the observed data, indicating that it did not adequately account for excess zeros. This suggests potential model misspecification under the poisson assumption, whereas the negative binomial model provides a better fit to the data.
@@ -458,7 +456,6 @@ check_model(m3_nb)
 The posterior predictive check effectively captures the long-tail nature of the data, with the blue prediction intervals generally covering the observed green data points.
 
 The posterior predictive check shows that most observed counts fall within the model-predicted intervals, suggesting good agreement between observed and predicted values. The residual variance generally follows the predicted variance, indicating that overdispersion is largely accounted for, while the quantile residuals align closely with the reference line, supporting the distributional assumptions of the model. Although a few observations appear influential, there is no strong evidence of systematic misspecification, making the negative binomial model an appropriate choice for these data.
-
 
 In the misspecified dispersion and zero-inflation,the observed variance (green line) is significantly higher than the predicted variance (blue line) and sits outside the shaded confidence area. This indicates overdispersion which can lead to overconfident p-values, in case of negative binomial model.
 
@@ -483,16 +480,13 @@ export_summs(m1_ols, m2_pois, m3_nb,
 
 ```
 
+**Explanation:** All three models show a positive treatment effect, meaning MPAs have more lobsters. However, the effect is only statistically significant in the poisson model (p value), not in the OLS or Negative Binomial models. This means the direction of the effect is consistent, but the statistical support varies across models.
+
 ------------------------------------------------------------------------
 
 #### Step 7: Building intuition - fixed effects
 
 **a.** Create new `df` with the `year` variable converted to a factor
-
-```{r}
-
-```
-
 
 **b.** Run the following negative binomial model using `glm.nb()`
 
@@ -519,6 +513,8 @@ summ(m5_fixedeffs, model.fit = FALSE)
 
 ```
 
+**Explanation:** The negative effect for the treatment (-1.72) represents the difference between the MPA reefs and control reefs at the beginning of the study. This indicates that the reefs selected for MPA initially started with significantly fewer lobsters than the control reefs. This makes sense because it establishes the starting point before the MPA protections had time to work. The positive interaction terms (such as treat:year2018) show that while the MPA reefs started lower, they experienced higher growth rates over time compared to the control reefs.
+
 **e.** Look at the model predictions: Use the `interact_plot()` function from package `interactions` to plot mean predictions by year and treatment status.
 
 **f.** Re-evaluate your responses (c) and (b) above.
@@ -530,6 +526,8 @@ interact_plot(m5_fixedeffs, pred = year, modx = treat,
 # HINT: Change `outcome.scale` to "response" to convert y-axis scale to counts
 ```
 
+**Explanation:** After plotting the model predictions, lobster abundance in MPAs increased from 2012 to 2015, declined in 2016, and then again increased through 2018. This pattern may seem unusual, but it likely reflects the external influences rather than a failure of the MPA. Possible explanations include spillover effects such as lobsters move beyond protected boundaries, selection bias from having more control sites than MPA sites, differences in sampling effort, and environmental factors such as changes in ocean currents or local food availability.
+
 **g.** Using `ggplot()` create a plot in same style as the previous `interaction plot`, but displaying the original scale of the outcome variable (lobster counts). This type of plot is commonly used to show how the treatment effect changes across discrete time points (i.e., panel data).
 
 The plot should have - `year` on the x-axis - `counts` on the y-axis - `mpa` as the grouping variable
@@ -538,14 +536,15 @@ The plot should have - `year` on the x-axis - `counts` on the y-axis - `mpa` as 
 # Hint 1: Group counts by `year` and `mpa` and calculate the `mean_count`
 # Hint 2: Convert variable `year` to a factor
 
-plot_counts <- spiny_counts %>% 
-    group_by(year, treat) %>% 
-    summarise(counts = sum(counts))
-ggplot(plot_counts, aes(x = year, y = counts)) +
-    geom_point(aes(color = treat)) +
-    geom_line(aes(color = treat))
+plot_counts <- ff_counts |> 
+    group_by(year, mpa) |> 
+    summarise(mean_count = mean(counts, na.rm = TRUE))
 
-# plot_counts %>% ggplot() ...
+plot_counts %>% ggplot(aes(year, mean_count, color = mpa, group = mpa)) +
+    geom_point() +
+    geom_line() +
+    theme_minimal()
+
 ```
 
 ------------------------------------------------------------------------
@@ -554,14 +553,25 @@ ggplot(plot_counts, aes(x = year, y = counts)) +
 
 a.  Discuss whether you think `spillover effects` are likely in this research context (see Glossary of terms; <https://docs.google.com/document/d/1RIudsVcYhWGpqC-Uftk9UTz3PIq6stVyEpT44EPNgpE/edit?usp=sharing>)
 
+**Answer:** Spillover effects are likely in this research context. As lobster populations grow within MPAs, limited space, food availability, or predator pressure can lead individuals to move into nearby non-MPA areas. The predictions plot supports this pattern, showing a decline in MPA counts alongside an increase in non-MPA counts between 2015 and 2016. This suggests movement out of protected areas rather than a loss of population. Later, the decline in non-MPAs may be due to the fishing pressure, while MPAs continue to support population growth until spillover occurs again.
+
 b.  Explain why spillover is an issue for the identification of causal effects
+
+**Answer:** Spillover is an issue for identifying causal effects because it violates the assumption of that the treatment and control groups are independent of each other. If lobsters move from MPAs to non-MPAs, the control sites are indirectly affected by the treatment. This makes differences between MPAs and non-MPAs smaller than the true effect of protection, leading to biased estimates of the causal impact of MPAs.
 
 c.  How does spillover relate to impact in this research setting?
 
+**Answer:** Spillover relates to impactin this research because it spreads the benefits of MPAs beyond their boundaries. While this indicates a positive ecological outcome, it makes the measured impact within MPAs appear smaller, since some of the benefits are also observed in non-MPA sites rather than only in protected areas.
+
 d.  Discuss the following causal inference assumptions in the context of the MPA treatment effect estimator. Evaluate if each of the assumption are reasonable:
 
-    1)  SUTVA: Stable Unit Treatment Value assumption
-    2)  Excludability assumption
+    1)  SUTVA: Stable Unit Treatment Value Assumption
+
+    SUTVA means that the treatment of one site should not affect other sites. In this study, it may not hold true because lobsters can move from MPAs to non-MPAs. This movement means that outcomes in control sites can be influenced by the treatment, so SUTVA is not fully met.
+
+    2)  Exogeneity Assumption
+
+    Exogeneity means that the choice of MPA sites is independent of lobster populations. This is also unlikely here because MPAs are usually chosen based on factors like good habitat, ecological importance, or existing lobster abundance. These factors affect outcomes, so the assumption may not be entirely true.
 
 ------------------------------------------------------------------------
 
@@ -612,6 +622,8 @@ model_ols <- lm(counts ~ treat, data = sblobster_count)
 summ(model_ols, model.fit = FALSE) 
 ```
 
+**Interpretation:** In OLS model, MPAs have an average of about 35 lobsters. Non-MPA have around 8 fewer lobsters than MPAs. The effect is barely statistically significant, showing some evidence that MPAs have more lobsters, but the result is not very strong.
+
 ```{r}
 # Fit a poisson regression model
 model_pois <- glm(counts ~ treat, data = sblobster_count, 
@@ -621,6 +633,8 @@ model_pois <- glm(counts ~ treat, data = sblobster_count,
 summ(model_pois, model.fit = FALSE)
 ```
 
+**Interpretation:** In the poisson model, the intercept of 3.55 means the expected lobster count in MPAs is about (e\^{3.55}) \~35 lobsters. The treatnon_MPA coefficient of -0.25 means non-MPA sites have about 22% fewer lobsters than MPAs ( e\^{-0.25}) \~ 0.78. Both results are statistically significant.
+
 ```{r}
 # Fit a negative binomial regression model
 model_nb <- glm.nb(counts ~ treat, data = sblobster_count)
@@ -628,14 +642,57 @@ model_nb <- glm.nb(counts ~ treat, data = sblobster_count)
 # Interpret the coefficient
 summ(model_nb, model.fit = FALSE)
 ```
+**Interpretation:** In the negative binomial model, MPAs have about 35 lobsters on average. Non-MPA sites have around 22% fewer lobsters. The effect is statistically significant.
 
 c.  Compare and contrast results with the analysis from the 2012-2018 data sample (\~ 2 paragraphs)
 
-**Explanation:**
+Export summary of the "OLS", "Poisson" and "Negative Binomial" models
+
+```{r}
+# Export summary of the models
+export_summs(model_ols, model_pois, model_nb,
+             model.names = c("OLS","Poisson", "NB"),
+             statistics = "none")
+```
+
+**Explanation:** All the three models have negative treatment effect. This indicates that non-MPA sites have lower lobster counts than MPAs. The effect is statistically significant in all models, though the level of significance varies. This suggests that both the direction and the evidence for the treatment effect are fairly stable across model specifications.
+
+```{r}
+# Check model diagnostics 
+check_model(model_ols)
+check_model(model_pois)
+check_model(model_nb)
+```
+
+```{r}
+# Check overdispersion
+check_overdispersion(model_pois)
+check_overdispersion(model_nb)
+```
 
 
+```{r}
+# Check zeroinflation
+check_zeroinflation(model_pois)
+check_zeroinflation(model_nb)
+```
 
 
+```{r}
+# Plot predictions
+sblobster_count %>% 
+  dplyr:::group_by(year, treat) %>% 
+  summarise(mean_count = mean(counts, na.rm = TRUE)) |> 
+  ggplot(aes(year, mean_count, group = treat, color = treat)) +
+  geom_point() +
+  geom_line() +
+  theme_minimal()
+
+```
+
+The OLS model shows MPAs have about 35 lobsters on average, with non-MPAs having ~8 fewer, though the effect is weakly significant. The poisson model predicts ~35 lobsters in MPAs and ~22% fewer in non-MPAs, but it shows severe overdispersion (dispersion ratio = 57.1) and extreme zero-inflation (observed zeros = 51, predicted = 0), indicating poor fit. In contrast, the negative binomial model predicts similar counts (~35 in MPAs, ~22% fewer in non-MPAs) and handles overdispersion (ratio ~1.04) and zero-inflation (predicted zeros = 47, observed = 51) well, making it the most appropriate model.
+
+Here, the 12 year results are similar to 6 year results, showing similar lobster abundance trends across OLS, poisson and negative binomial models. OLS models still shows overdispersion and zero-inflation, while negative binomial models handle these well. The poisson model is no longer overdispersed and shows little zero-inflation with the added data. Treatment effects are still significant and slightly stronger in the 12 year dataset and model coefficients remains fairly consistent. Short-term changes in MPA and non-MPA lobster trends may reflect natural ecological changes or potential spillover effects.
 
 ------------------------------------------------------------------------
 
