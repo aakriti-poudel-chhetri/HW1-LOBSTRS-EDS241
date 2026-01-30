@@ -1,13 +1,14 @@
 ---
 title: "Assignment 1"
-author: 'EDS 241 / ESM 244 (**Due: 1/20**)'
+subtitle: "California Spiny Lobster (*Panulirus Interruptus*): Assessing the Impact of Marine Protected Areas (MPAs) at 5 Reef Sites in Santa Barbara County"
+author: "Aakriti Poudel"
 date: "1/8/26"
 output:
-    pdf_document: default
-html_document:
+  pdf_document:
+    latex_engine: xelatex
+  html_document:
     theme: flatly
-subtitle: 'California Spiny Lobster (*Panulirus Interruptus*): Assessing the Impact
-  of Marine Protected Areas (MPAs) at 5 Reef Sites in Santa Barbara County'
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
@@ -200,22 +201,17 @@ spiny_counts %>% ggplot(aes(x = counts, y = site_label, fill = site_label)) +
                         quantiles = 2,
                         quantile_fun = median,
                         vline_color = "red",
-                        vline_size = 0.5,
-                        scale = 0.8) +
+                        vline_width = 0.5,
+                        scale = 0.8,
+                        bandwidth = 8.98) +
     labs(title = "Lobster counts by reef sites",
          subtitle = "Red vertical line is median",
          x = "Lobster counts",
-         y = "Reef sites",
-         fill = "Reef sites",
-         color = "Median") +
+         y = "Reef sites") +
     theme_minimal() +
-    theme(legend.position = "right",
-          axis.title.y = element_text(margin = margin(r = 10))) +
-    guides(fill = guide_legend(title = "Reef site"),
-           color = guide_legend(override.aes = list(linetype = 1, 
-                                                   linewidth = 1,
-                                                   color = "red")))
-
+    theme(legend.position = "none",
+          axis.title.y = element_text(margin = margin(r = 10)))
+                                                 
 ```
 
 ```{r}
@@ -232,7 +228,8 @@ spiny_counts %>%
          fill = "MPA status") +
     scale_fill_manual(values = c("MPA" = "orangered3", "non_MPA" = "olivedrab4"),
                       labels = c("MPA" = "MPA", "non_MPA" = "non-MPA")) +
-    theme_minimal()
+    theme_minimal() +
+        theme(legend.position = "none")
 ```
 
 ```{r}
@@ -480,7 +477,11 @@ export_summs(m1_ols, m2_pois, m3_nb,
 
 ```
 
-**Explanation:** All three models show a positive treatment effect, meaning MPAs have more lobsters. However, the effect is only statistically significant in the poisson model (p value), not in the OLS or Negative Binomial models. This means the direction of the effect is consistent, but the statistical support varies across models.
+**Explanation:** All three models show a positive treatment effect, meaning MPAs have more lobsters. However, the effect is only statistically significant in the poisson model (p value), not in the OLS or negative binomial models. The OLS and negative binomial models both say the difference could be due to chance.
+
+The poisson model assumes that the spread in the data is small and predictable. When the actual data is more spread out than expected, over dispersed, the poisson model becomes overconfident and reports stronger results than it should. The negative binomial model is designed to handle this extra spread, so it gives more cautious and realistic results. The OLS model also accounts for variability more flexibly.
+
+The three models agree that MPAs seem to have more lobsters, but two out of three models say we cannot be sure this difference is real. Therefore, the treatment effect is not reliable. Since the negative binomial and OLS models better handle the variability in data, the significant result from the poisson model is likely misleading. This shows why it is important to check assumptions and try different models before making conclusions.
 
 ------------------------------------------------------------------------
 
@@ -567,7 +568,11 @@ d.  Discuss the following causal inference assumptions in the context of the MPA
 
     1)  SUTVA: Stable Unit Treatment Value Assumption
 
-    SUTVA means that the treatment of one site should not affect other sites. In this study, it may not hold true because lobsters can move from MPAs to non-MPAs. This movement means that outcomes in control sites can be influenced by the treatment, so SUTVA is not fully met.
+    In this study, SUTVA means that each site's lobster count depends only on whether that site is an MPA or not. It should not be affected by what is happening at other site. SUTVA has two conditions that must hold true for valid causal inference:
+    **1. No interference:** One unit's treatment should not affect another unit's outcome. In this study, this condition is questionable because lobsters can physically move between sites. Lobsters in MPAs may migrate to nearby non-MPA sites, creating a spillover effect. This means the non-MPA sites could indirectly benefit from the protection given to MPA sites. If lobsters breed and grow in protected areas and then move to unprotected areas, the non-MPA counts would be higher than they would be without any MPAs nearby. This makes it harder to measure the true effect of protection.
+    **2. No hidden variation:** The treatment should be implemented consistently across all treated units. In this study, this is not possible as all MPAs are not same. They may differ in size, how long they have been protected, or surrounding habitat quality. If some MPAs have stricter enforcement or better habitat than others, the treatment is not truly uniform across all treated sites.
+    
+    Because both conditions are potentially violated, SUTVA is not fully met in this study. The spillover of lobsters between sites and the inconsistent implementation of protection across MPAs make it difficult to isolate the true causal effect of MPA status on lobster abundance.
 
     2)  Exogeneity Assumption
 
